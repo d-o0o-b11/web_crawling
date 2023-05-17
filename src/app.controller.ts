@@ -2,6 +2,7 @@ import { Controller, Get } from '@nestjs/common';
 import { AppService } from './app.service';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
+import * as puppeteer from 'puppeteer';
 
 @Controller()
 export class AppController {
@@ -15,15 +16,21 @@ export class AppController {
   //소환자명 검색
   @Get('crawling')
   async performCrawling() {
-    const username = '스뿡지밥';
+    const username = '씩씩하구';
     const url = `https://www.op.gg/summoner/userName=${username}`;
 
     try {
       const response = await axios.get(url);
       const html = response.data;
       const $ = cheerio.load(html);
+      //----------------------------------------
+      const browser = await puppeteer.launch();
+      const page = await browser.newPage();
+      await page.goto(url);
 
+      //------------------------------------------
       const tier = [];
+      const stats = [];
 
       const nickName = $('h1').text(); //스뿡지밥
       // const profile_icon = $('.profile-icon img').toString(); //프로필 아이콘
@@ -36,10 +43,52 @@ export class AppController {
       const tier_tier = $('.css-1v663t.e1x14w4w1 .tier').text();
       const tier_lp = $('.css-1v663t.e1x14w4w1 .lp').text();
       const win_lose = $('.css-1v663t.e1x14w4w1 .win-lose-container').text();
-      const recent = $('.css-150oaqg.e1shm8tx0').toString();
+      // const recent = $('.css-3i6n1d.ehasqiv3').text(); //<--얘는 안됨
+      const stats_win_lose = await page.evaluate(() => {
+        return document.querySelector('.css-3i6n1d.ehasqiv3 .stats .win-lose')
+          .textContent;
+      });
+      const stats_kda = await page.evaluate(() => {
+        return document.querySelector('.css-3i6n1d.ehasqiv3 .stats .k-d-a')
+          .textContent;
+      });
+      const stats_ratio = await page.evaluate(() => {
+        return document.querySelector('.css-3i6n1d.ehasqiv3 .stats .ratio')
+          .textContent;
+      });
+      const stats_kill_participantion = await page.evaluate(() => {
+        return document.querySelector(
+          '.css-3i6n1d.ehasqiv3 .stats .kill-participantion',
+        ).textContent;
+      });
+
+      const stats_img = await page.$('.css-3i6n1d.ehasqiv3 .stats svg');
+
+      const stats_img_tag = await page.evaluate(
+        (stats_img) => stats_img.outerHTML,
+        stats_img,
+      );
+
+      const recent_history = await page.$$eval(
+        '.css-1qq23jn.e1iiyghw3',
+        (elements) => {
+          return elements.map((e) =>
+            e.outerHTML.split('<li class="css-1qq23jn e1iiyghw3">'),
+          );
+        },
+      );
+
+      //<li class=\"css-1qq23jn e1iiyghw3\"> 기준으로 잘라서 배열에 넣기
 
       tier.push(tier_img, tier_tier, tier_lp, win_lose);
-
+      stats.push(
+        stats_win_lose,
+        stats_kda,
+        stats_ratio,
+        stats_kill_participantion,
+        stats_img_tag,
+      );
+      await browser.close();
       return {
         nickName,
         profile_icon,
@@ -47,7 +96,9 @@ export class AppController {
         //--profile
         tier,
         //------tier
-        recent,
+        stats,
+        //------stats
+        recent_history,
       };
     } catch (err) {
       console.log(err);
