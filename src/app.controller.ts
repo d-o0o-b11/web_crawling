@@ -13,9 +13,19 @@ export class AppController {
     return this.appService.getHello();
   }
 
+  // @Get('/test')
+  // getTest() {
+  //   return this.appService.test();
+  // }
+
   //소환자명 검색
   @Get('crawling/lol')
   async performCrawling() {
     return await this.appService.getLolInfo('씩씩하구');
+  }
+
+  @Get('crawling/lolchess')
+  async lolChessCrawling() {
+    return await this.appService.getLolChessInfo('씩씩하구');
   }
 }

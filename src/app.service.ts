@@ -1,41 +1,54 @@
 import { Injectable } from '@nestjs/common';
-import axios from 'axios';
-// import * as cheerio from 'cheerio';
 import * as puppeteer from 'puppeteer';
-
+import type { BrowserContext } from 'puppeteer';
+import { InjectContext } from 'nest-puppeteer';
 @Injectable()
 export class AppService {
+  // constructor(
+  //   @InjectContext() private readonly browserContext: BrowserContext,
+  // ) {}
+
   getHello() {
     return 'Hello';
   }
+
+  // async test() {
+  //   const page = await this.browserContext.newPage();
+  //   await page.goto(`https://www.op.gg/summoner/userName=스뿡지밥`);
+  //   return await page.content();
+  // }
 
   async getLolInfo(username: string) {
     const url = `https://www.op.gg/summoner/userName=${username}`;
 
     try {
-      // const response = await axios.get(url);
-      // const html = response.data;
-      // const $ = cheerio.load(html);
-      //----------------------------------------
-      const browser = await puppeteer.launch();
+      const browser = await puppeteer.launch({
+        // args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        headless: true,
+        executablePath: '/usr/bin/chromium-browser',
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu',
+        ],
+        ignoreHTTPSErrors: true,
+      });
       const page = await browser.newPage();
-      await page.goto(url);
+      await page.goto(url, {
+        waitUntil: 'networkidle2',
+      });
 
       //------------------------------------------
       const tier = [];
       const stats = [];
 
-      // const nickName = $('h1').text(); //스뿡지밥
       const nickName = await page.evaluate(() => {
         return document.querySelector('.summoner-name').textContent;
       });
-      // const profile_icon = $('.profile-icon img').toString(); //프로필 아이콘
-      //<img src=\"https://opgg-static.akamaized.net/meta/images/profile_icons/profileIcon4568.jpg?image=q_auto,f_png,w_auto&amp;v=1684225762498\" alt=\"profile image\">
-      // const profile_icon = $('.profile-icon img').attr('src');
+
       const profile_icon = await page.$eval('.profile-icon img', (e) => e.src);
 
-      //https://opgg-static.akamaized.net/meta/images/profile_icons/profileIcon4568.jpg?image=q_auto,f_png,w_auto&v=1684225762498
-      // const level = $('.profile-icon span').text(); //레벨
       const level = await page.evaluate(() => {
         return document.querySelector('.profile-icon span').textContent;
       });
@@ -60,12 +73,6 @@ export class AppService {
         return { tier_tier, tier_lp, win_lose };
       });
 
-      // const tier_img = $('.css-1v663t.e1x14w4w1 img').attr('src');
-      // const tier_tier = $('.css-1v663t.e1x14w4w1 .tier').text();
-      // const tier_lp = $('.css-1v663t.e1x14w4w1 .lp').text();
-      // const win_lose = $('.css-1v663t.e1x14w4w1 .win-lose-container').text();
-
-      // const recent = $('.css-3i6n1d.ehasqiv3').text(); //<--얘는 안됨
       const stats_win_lose = await page.evaluate(() => {
         return document.querySelector('.css-3i6n1d.ehasqiv3 .stats .win-lose')
           .textContent;
@@ -100,8 +107,6 @@ export class AppService {
         },
       );
 
-      //<li class=\"css-1qq23jn e1iiyghw3\"> 기준으로 잘라서 배열에 넣기
-
       tier.push(tier_img, tierstore);
       stats.push(
         stats_win_lose,
@@ -128,8 +133,55 @@ export class AppService {
   }
 
   async getLolChessInfo(username: string) {
-    const url = `https://lolchess.gg/profile/kr/${username}`;
-    console.log('?');
-    return 'gd';
+    const url = `https://lolchess.gg/search?region=KR&name=스뿡지밥`;
+    //https://lolchess.gg/profile/kr/%EC%8A%A4%EB%BF%A1%EC%A7%80%EB%B0%A5
+    try {
+      // const browser = await puppeteer.launch();
+      const browser = await puppeteer.launch({
+        headless: true,
+        executablePath: '/usr/bin/chromium-browser',
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu',
+        ],
+        ignoreHTTPSErrors: true,
+      });
+      const page = await browser.newPage();
+      await page.goto(url);
+
+      console.log('ddfsdfsdf');
+
+      const profile_icon = await page.$eval(
+        '.profile__tier__icon img',
+        (e) => e.src,
+      );
+      const tier = await page.evaluate(() => {
+        return document.querySelector('.profile__tier__summary span')
+          .textContent;
+      });
+
+      const game_count = await page.evaluate(() => {
+        return document.querySelector('.profile__tier__stat__value.float-right')
+          .textContent;
+      });
+
+      const recent_history = await page.$$eval(
+        'profile__match-history-v2__items',
+        (elements) => {
+          return elements.map((e) => e.outerHTML);
+        },
+      );
+
+      return {
+        profile_icon,
+        tier,
+        game_count,
+        recent_history,
+      };
+    } catch (err) {
+      console.log(err);
+    }
   }
 }

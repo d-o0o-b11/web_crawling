@@ -1,0 +1,15 @@
+version: '3.7'
+
+services:
+  nestjs:
+    container_name: server
+    build:
+      context: .
+      dockerfile: dockerfile
+    volumes:
+      - .:/usr/src/web_crawling
+      - /usr/src/web_crawling/node_modules
+    command: yarn start:debug
+    ports:
+      - 3000:3000
+    restart: always
