@@ -37,4 +37,4 @@ jobs:
           dockerfile: dockerfile
           platforms: linux/amd64
           push: true
-          tags: latest
+          tags: jimin8830/crawling:latest
