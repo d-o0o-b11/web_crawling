@@ -133,7 +133,7 @@ export class AppService {
   }
 
   async getLolChessInfo(username: string) {
-    const url = `https://lolchess.gg/search?region=KR&name=스뿡지밥`;
+    const url = `https://lolchess.gg/search?region=KR&name=jeromia`;
     //https://lolchess.gg/profile/kr/%EC%8A%A4%EB%BF%A1%EC%A7%80%EB%B0%A5
     try {
       // const browser = await puppeteer.launch();
@@ -151,7 +151,9 @@ export class AppService {
       const page = await browser.newPage();
       await page.goto(url);
 
-      console.log('ddfsdfsdf');
+      const player_name = await page.evaluate(() => {
+        return document.querySelector('.player-name').textContent;
+      });
 
       const profile_icon = await page.$eval(
         '.profile__tier__icon img',
@@ -174,12 +176,14 @@ export class AppService {
         },
       );
 
-      return {
-        profile_icon,
-        tier,
-        game_count,
-        recent_history,
-      };
+      // const alltest = await page.evaluate(() => {
+      //   return document.querySelector('profile__match-history-v2__items')
+      //     .outerHTML;
+      // });
+
+      // console.log(alltest);
+
+      return { player_name, profile_icon, tier, game_count, recent_history };
     } catch (err) {
       console.log(err);
     }

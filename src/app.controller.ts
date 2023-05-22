@@ -21,7 +21,7 @@ export class AppController {
   //소환자명 검색
   @Get('crawling/lol')
   async performCrawling() {
-    return await this.appService.getLolInfo('씩씩하구');
+    return await this.appService.getLolInfo('스뿡지밥');
   }
 
   @Get('crawling/lolchess')
