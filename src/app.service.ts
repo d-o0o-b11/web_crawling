@@ -135,6 +135,7 @@ export class AppService {
   async getLolChessInfo(username: string) {
     const url = `https://lolchess.gg/search?region=KR&name=jeromia`;
     //https://lolchess.gg/profile/kr/%EC%8A%A4%EB%BF%A1%EC%A7%80%EB%B0%A5
+    console.log('test');
     try {
       // const browser = await puppeteer.launch();
       const browser = await puppeteer.launch({
