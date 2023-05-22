@@ -1,0 +1,12 @@
+version: '3.7'
+
+services:
+  nestjs:
+    container_name: server
+    image: jimin8830/crawling:latest
+    volumes:
+      - /usr/src/web_crawling/node_modules
+    command: yarn start:debug
+    ports:
+      - 3000:3000
+    restart: always
